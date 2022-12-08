@@ -1,53 +1,25 @@
-import { IOmdbResponse } from "../../src/ts/models/IOmdbResponse";
-
-const fakeData: IOmdbResponse = {
-  Search: [
-    {
-      Title: "Star Wars IV",
-      imdbID: "31841",
-      Type: "text",
-      Poster:
-        "https://m.media-amazon.com/images/M/MV5BOTA5NjhiOTAtZWM0ZC00MWNhLThiMzEtZDFkOTk2OTU1ZDJkXkEyXkFqcGdeQXVyMTA4NDI1NTQx._V1_SX300.jpg%22",
-      Year: "1977",
-    },
-    {
-      Title: "The Lord of the Rings",
-      imdbID: "94752",
-      Type: "text",
-      Poster:
-        "https://m.media-amazon.com/images/M/MV5BN2EyZjM3NzUtNWUzMi00MTgxLWI0NTctMzY4M2VlOTdjZWRiXkEyXkFqcGdeQXVyNDUzOTQ5MjY@._V1_SX300.jpg%22",
-      Year: "2001",
-    },
-    {
-      Title: "Harry Potter III",
-      imdbID: "18463",
-      Type: "text",
-      Poster:
-        "https://m.media-amazon.com/images/M/MV5BMGVmMWNiMDktYjQ0Mi00MWIxLTk0N2UtN2ZlYTdkN2IzNDNlXkEyXkFqcGdeQXVyODE5NzE3OTE@._V1_SX300.jpg%22",
-      Year: "2001",
-    },
-  ],
-};
+import { fakeData } from "../../src/ts/services/__mocks__/movieservice";
 
 beforeEach(() => {
   cy.visit("/");
 });
 
 describe("testing movie application", () => {
-  //handlar om vår index.html
   it("should have title", () => {
     cy.get("Title").contains("Async testing");
   });
 
   it("should find button", () => {
-    //kontrollerar index.html
+    cy.get("button").should("have.id", "search");
+  });
+
+  it("should be able to click button", () => {
     cy.get("input").type("Harry");
     cy.get("button").click(); //när vi klickar kontrollerar vi att när vi klickar hämtar den riktig data.
     cy.get("div#movie-container>div.movie").should("have.length", 10);
   });
 
   it("should get 3 movie divs", () => {
-    //borde jag ha den här?
     cy.intercept("GET", "http://omdbapi.com/*", fakeData);
     cy.get("button").click();
     cy.get("div.movie").should("have.length", 3);
@@ -87,9 +59,7 @@ describe("testing movie application", () => {
 
   it("should have Batman in title", () => {
     cy.intercept("GET", "http://omdbapi.com/*", fakeData);
-
     cy.get("form").submit();
-
     cy.get("div.movie:first > h3").contains("Star");
   });
 
@@ -118,17 +88,30 @@ describe("testing movie application", () => {
     cy.get("input").type("Harry Potter").should("have.value", "Harry Potter");
   });
   it("should search with one word written", () => {
-    cy.intercept("GET", "http://omdbapi.com/*", fakeData);
+    cy.intercept("GET", "http://omdbapi.com/*", fakeData).as("movieCall");
+    cy.get("button").click();
+    cy.wait("@movieCall").its("request.url");
     cy.get("input").type("Die").should("have.value", "Die");
   });
 
   it("should give me message Inga sökresultat att visa", () => {
-    cy.intercept("GET", "http://omdbapi.com/*", fakeData);
+    cy.intercept("GET", "http://omdbapi.com/*", {});
     cy.get("input#searchText").should("be.empty");
-    cy.get("button#search").submit();
-    cy.get("div#movie-container>p").should(
-      "contain",
-      "Inga sökresultat att visa"
-    );
+    cy.get("button#search").click();
+    cy.get("div#movie-container > p").contains("Inga sökresultat att visa");
+  });
+
+  it("should give me message Inga sökresultat att visa if letters are less than 3", () => {
+    cy.intercept("GET", "http://omdbapi.com/*", {});
+    cy.get("input#searchText").type("ab");
+    cy.get("button#search").click();
+    cy.get("div#movie-container > p").contains("Inga sökresultat att visa");
+  });
+
+  it("should be the correct url call", () => {
+    cy.get("input").type("Harry").should("have.value", "Harry");
+    cy.intercept("GET", "http://omdbapi.com/*", fakeData).as("movieCall");
+    cy.get("button").click();
+    cy.wait("@movieCall").its("request.url").should("contain", "Harry");
   });
 });
