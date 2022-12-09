@@ -1,5 +1,5 @@
-import { fakeData } from "../../src/ts/services/__mocks__/movieservice";
-
+// import { fakeData } from "../../src/ts/services/__mocks__/movieservice";
+//använder inte den övre importen då jag kör fixture istället.
 beforeEach(() => {
   cy.visit("/");
 });
@@ -19,52 +19,67 @@ describe("testing movie application", () => {
     cy.get("div#movie-container>div.movie").should("have.length", 10);
   });
 
-  it("should get 3 movie divs", () => {
-    cy.intercept("GET", "http://omdbapi.com/*", fakeData);
+  //testar fixtures
+  it("should get 3 movie divs with mockdata", () => {
+    cy.intercept("GET", "http://omdbapi.com/*", { fixture: "movies" }).as(
+      "movieSearch"
+    );
     cy.get("button").click();
     cy.get("div.movie").should("have.length", 3);
   });
 
   it("should get 3 headings", () => {
-    cy.intercept("GET", "http://omdbapi.com/*", fakeData);
+    cy.intercept("GET", "http://omdbapi.com/*", { fixture: "movies" }).as(
+      "movieSearch"
+    );
     cy.get("form").submit();
     cy.get("div.movie > h3").should("have.length", 3);
   });
 
   it("should get 3 img", () => {
-    cy.intercept("GET", "http://omdbapi.com/*", fakeData);
+    cy.intercept("GET", "http://omdbapi.com/*", { fixture: "movies" }).as(
+      "movieSearch"
+    );
     cy.get("form").submit();
     cy.get("div.movie > img").should("have.length", 3);
   });
 
   it("should not get data", () => {
-    cy.intercept("GET", "http://omdbapi.com/*", {}); //måsvingen är en tom mall
+    cy.intercept("GET", "http://omdbapi.com/*", {});
     cy.get("button").click();
     cy.get("p").contains("Inga sökresultat att visa");
     cy.get("div.movie").should("have.length", 0);
   });
 
   it("should be able to type in input", () => {
-    cy.intercept("GET", "http://omdbapi.com/*", fakeData);
+    cy.intercept("GET", "http://omdbapi.com/*", { fixture: "movies" }).as(
+      "movieSearch"
+    );
     cy.get("input").type("Harry Potter").should("have.value", "Harry Potter");
     cy.get("form").submit();
   });
 
   it("should be able to type in input", () => {
-    cy.intercept("GET", "http://omdbapi.com/*", fakeData);
+    cy.intercept("GET", "http://omdbapi.com/*", { fixture: "movies" }).as(
+      "movieSearch"
+    );
     cy.get("input")
       .type("The Lord of the Rings")
       .should("have.value", "The Lord of the Rings");
   });
 
   it("should have Batman in title", () => {
-    cy.intercept("GET", "http://omdbapi.com/*", fakeData);
+    cy.intercept("GET", "http://omdbapi.com/*", { fixture: "movies" }).as(
+      "movieSearch"
+    );
     cy.get("form").submit();
     cy.get("div.movie:first > h3").contains("Star");
   });
 
   it("should be able to click search", () => {
-    cy.intercept("GET", "http://omdbapi.com/*", fakeData);
+    cy.intercept("GET", "http://omdbapi.com/*", { fixture: "movies" }).as(
+      "movieSearch"
+    );
     cy.get("input").type("Harry Potter").should("have.value", "Harry Potter");
     cy.get("button").click();
     cy.get("div#movie-container > div").should("have.class", "movie");
@@ -84,13 +99,17 @@ describe("testing movie application", () => {
   });
 
   it("should search by pressing enter instead of klicking searchbutton", () => {
-    cy.intercept("GET", "http://omdbapi.com/*", fakeData);
+    cy.intercept("GET", "http://omdbapi.com/*", { fixture: "movies" }).as(
+      "movieSearch"
+    );
     cy.get("input").type("Harry Potter").should("have.value", "Harry Potter");
   });
   it("should search with one word written", () => {
-    cy.intercept("GET", "http://omdbapi.com/*", fakeData).as("movieCall");
+    cy.intercept("GET", "http://omdbapi.com/*", { fixture: "movies" }).as(
+      "movieSearch"
+    );
     cy.get("button").click();
-    cy.wait("@movieCall").its("request.url");
+    cy.wait("@movieSearch").its("request.url");
     cy.get("input").type("Die").should("have.value", "Die");
   });
 
@@ -110,8 +129,10 @@ describe("testing movie application", () => {
 
   it("should be the correct url call", () => {
     cy.get("input").type("Harry").should("have.value", "Harry");
-    cy.intercept("GET", "http://omdbapi.com/*", fakeData).as("movieCall");
+    cy.intercept("GET", "http://omdbapi.com/*", { fixture: "movies" }).as(
+      "movieSearch"
+    );
     cy.get("button").click();
-    cy.wait("@movieCall").its("request.url").should("contain", "Harry");
+    cy.wait("@movieSearch").its("request.url").should("contain", "Harry");
   });
 });
